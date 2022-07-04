@@ -8,6 +8,7 @@ from pytesseract import Output
 line_thickness = 2
 epslon = 18
 
+#finds if distance within blocks are whitin the threshold of epslon
 def is_close(blockA, blockB):
     for i in range(4):
         for j in range(4):
@@ -24,8 +25,11 @@ def draw(blocks ,cluster, image):
         else:
             image = cv2.rectangle(image, (x1, y1), (x2, y2), cluster[block[4]], block[4])
 
+#clusters the detected blocks using Custom DBSCAN
 def cluster_blocks(blocks, image):
+    #dictonary holds the color labes of a cluster
     cluster= {}
+    #updates the cluster key of blocks
     cluster_key = 1
     for i in range(len(blocks)):
         for j in range(i+1,len(blocks)):
@@ -47,12 +51,13 @@ def cluster_blocks(blocks, image):
 def detect_blocks(boxes, blocks):
     for i in range(len(boxes)):
         bound = True
-        #below loop eleminates the bigger bounding boxes
+        #below loop eleminates the bigger bounding boxes which has boxes within
         for j in range(i+1,len(boxes)):
             if boxes[i][0]<=boxes[j][0] and boxes[i][1]<=boxes[j][1] and boxes[i][2]>=boxes[j][2] and boxes[i][3]>=boxes[j][3]:
                 bound = False
                 break
         (x1, y1, x2, y2) = (boxes[i][0], boxes[i][1], boxes[i][2], boxes[i][3])
+        #makes sure it is not a big bounding box and also not a box containing a line
         if bound==True and np.abs(x1-x2)>line_thickness and np.abs(y1-y2)>line_thickness:
             blocks.append([[x1,y1],[x1,y2],[x2,y1],[x2,y2],""])
 
