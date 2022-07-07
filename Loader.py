@@ -5,7 +5,7 @@ import random
 import numpy as np
 from pytesseract import Output
 
-line_thickness = 2
+line_thickness = 4
 epslon = 18
 
 #finds if distance within blocks are whitin the threshold of epslon
@@ -17,13 +17,27 @@ def is_close(blockA, blockB):
                 return True
     return False
 
-def draw(blocks ,cluster, image):
+def draw(blocks ,clusters, image):
+    cluster_squares = {}
     for  block in blocks:
-        (x1,y1,x2,y2) = (block[0][0], block[0][1], block[3][0], block[3][1])
-        if block[4]=="":
-            image = cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        if block[4]!="":
+            cluster_labe = clusters[block[4]]
+            if cluster_labe in cluster_squares.keys():
+                if cluster_squares[cluster_labe][0] > block[0][0]:
+                    cluster_squares[cluster_labe][0] = block[0][0]
+                if cluster_squares[cluster_labe][1] > block[0][1]:
+                    cluster_squares[cluster_labe][1] = block[0][1]
+                if cluster_squares[cluster_labe][2] < block[3][0]:
+                    cluster_squares[cluster_labe][2] = block[3][0]
+                if cluster_squares[cluster_labe][3] < block[3][1]:
+                    cluster_squares[cluster_labe][3] = block[3][1]
+            else:
+                cluster_squares[cluster_labe] = [block[0][0], block[0][1], block[3][0], block[3][1]]
         else:
-            image = cv2.rectangle(image, (x1, y1), (x2, y2), cluster[block[4]], block[4])
+            (x1,y1,x2,y2) = (block[0][0], block[0][1], block[3][0], block[3][1])
+            image = cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    for squares in cluster_squares.values():
+        image = cv2.rectangle(image, (squares[0], squares[1]), (squares[2], squares[3]), (0, 255, 0), 2)
 
 #clusters the detected blocks using Custom DBSCAN
 def cluster_blocks(blocks, image):
@@ -41,7 +55,7 @@ def cluster_blocks(blocks, image):
                 elif blocks[j][4] =="" and blocks[i][4]=="": 
                     blocks[j][4] = cluster_key
                     blocks[i][4] = cluster_key
-                    cluster[cluster_key] = (random.randint(0, 255),random.randint(0, 255),random.randint(0, 255))
+                    cluster[cluster_key] = cluster_key
                     cluster_key = cluster_key+1
                 else:
                     cluster[blocks[i][4]] = cluster[blocks[j][4]]
@@ -66,7 +80,7 @@ def detect_blocks(boxes, blocks):
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 # Read image from which text needs to be extracted
-img = cv2.imread("C:\\Users\\GHOSH\\OneDrive\\Documents\\GitHub\\CNN\\Images\\grab.png")
+img = cv2.imread("C:\\Users\\GHOSH\\OneDrive\\Documents\\GitHub\\CNN\\Images\\M11.png")
 
 # configurations
 config = ('-l eng --oem 1 --psm 3')
